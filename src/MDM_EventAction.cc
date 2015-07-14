@@ -133,19 +133,22 @@ void MDM_EventAction::EndOfEventAction(const G4Event* event)
 	
 	G4cout << " Total Hits in the scintillator: " << n_scint_hit << G4endl;
 
+	/*
 	for(int i=0;i<n_scint_hit;i++)
 	{
 		G4cout << "----Hit #" <<i << G4endl;
 		(*scintHC)[i]->Print();
 	}
-	
+	*/
 	G4cout << " Total Hits in the SiPM: " << n_sipm_hit << G4endl;
 
+	/*
 	for(int i=0;i<n_sipm_hit;i++)
 	{
 		G4cout << "----Hit #" <<i << G4endl;
 		(*sipmHC)[i]->Print();
 	}
+	*/
 
 
 

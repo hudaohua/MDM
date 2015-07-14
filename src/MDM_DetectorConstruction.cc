@@ -276,12 +276,12 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	G4double sigma_alpha = 0.1;
 	detectorWrap ->SetType (dielectric_metal);
 	detectorWrap ->SetFinish(polished); // polished
-	detectorWrap ->SetModel(glisur);    // was unified
+	detectorWrap ->SetModel(unified);    // glisur was Geant3 model and expired.
 	detectorWrap ->SetSigmaAlpha(sigma_alpha);
 
 	const G4int num = 5;
 	G4double pp[num] = { 2.761*eV,2.485*eV,2.258*eV,2.071*eV,1.911*eV};
-	G4double reflectivity[num] = {0.8,0.8,0.8,0.8,0.8};   // 100% reflectivity
+	G4double reflectivity[num] = {0.99,0.99,0.99,0.99,0.99};   // QT throws exception when this is set to 1.0
 	G4double efficiency[num] = {0.0, 0.0, 0.0, 0.0, 0.0};
 	G4double rindex[num] = {1.56,1.56,1.56,1.56,1.56};
 
@@ -328,34 +328,38 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
                     checkOverlaps);          //overlaps checking
   
 	// Define the optical surface between detector and sensor
-	G4OpticalSurface* detector_sensor = new G4OpticalSurface("detector_sensor");
-//	G4LogicalBorderSurface* surface2 = new G4LogicalBorderSurface("detector_sensor", physDetector, physSensor,detector_sensor);
+	G4OpticalSurface* PhotonSensor_op_surf = new G4OpticalSurface("PhotonSensor_op_surf");
+//	G4LogicalBorderSurface* surface2 = new G4LogicalBorderSurface("PhotonSensor_op_surf", physDetector, physSensor,PhotonSensor_op_surf);
 
 
 
 	sigma_alpha = 0.1;
-	detector_sensor ->SetType (dielectric_metal);
-	detector_sensor ->SetFinish(polished);
-	detector_sensor ->SetModel(unified);  //was glisur
-	//detector_sensor ->SetSigmaAlpha(sigma_alpha);
+	PhotonSensor_op_surf ->SetType (dielectric_metal);
+	PhotonSensor_op_surf ->SetFinish(polished);
+	PhotonSensor_op_surf ->SetModel(unified);  //was glisur
+	//PhotonSensor_op_surf ->SetSigmaAlpha(sigma_alpha);
 
 	const G4int num1 = 5;
 	G4double pp1[num1] = { 2.761*eV,2.485*eV,2.258*eV,2.071*eV,1.911*eV};
-	G4double reflectivity1[num1] = {0.9,0.9,0.9,0.9,0.9};   // 10% reflectivity
-	G4double efficiency1[num1] = {1, 1, 1, 1, 1};
+	G4double reflectivity1[num1] = {1.0,1.0,1.0,1.0,1.0};   // 10% reflectivity
+	G4double efficiency1[num1] = {0.0, 0.0, 0.0, 0.0, 0.0};
 	G4double rindex1[num1] = {1.56,1.56,1.56,1.56,1.56};
 
-	G4MaterialPropertiesTable* detector_sensorProperty = new G4MaterialPropertiesTable();
-	detector_sensorProperty->AddProperty("REFLECTIVITY",pp1,reflectivity1,num1);
-	detector_sensorProperty->AddProperty("EFFICIENCY",pp1,efficiency1,num1);	
-	detector_sensorProperty->AddProperty("RINDEX",pp1,rindex1,num1);
+	G4MaterialPropertiesTable* PhotonSensor_op_surf_Property = new G4MaterialPropertiesTable();
+	PhotonSensor_op_surf_Property->AddProperty("REFLECTIVITY",pp1,reflectivity1,num1);
+//	PhotonSensor_op_surf_Property->AddProperty("EFFICIENCY",pp1,efficiency1,num1);	
+	PhotonSensor_op_surf_Property->AddProperty("RINDEX",pp1,rindex1,num1);
 
-	detector_sensor->SetMaterialPropertiesTable(detector_sensorProperty);
+	PhotonSensor_op_surf_Property->AddProperty("SPECULARLOBECONSTANT", pp1,reflectivity1, num1);   //0
+	PhotonSensor_op_surf_Property->AddProperty("SPECULARSPIKECONSTANT", pp1,efficiency1, num1);    //1
+	PhotonSensor_op_surf_Property->AddProperty("BACKSCATTERCONSTANT", pp1,reflectivity1, num1);    //0
+
+	PhotonSensor_op_surf->SetMaterialPropertiesTable(PhotonSensor_op_surf_Property);
 	
 	/* create logical skin surfaces */
 	G4LogicalSkinSurface* surface1 = new G4LogicalSkinSurface("detectorWrap",logicDetector,detectorWrap);
 
-	G4LogicalSkinSurface* surface2 = new G4LogicalSkinSurface("detector_sensor",logicSensor,detector_sensor);
+	G4LogicalSkinSurface* surface2 = new G4LogicalSkinSurface("PhotonSensor_op_surf",logicSensor,PhotonSensor_op_surf);
 
 
   //always return the physical World

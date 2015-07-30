@@ -1,26 +1,12 @@
 //
 // ********************************************************************
 // * License and Disclaimer                                           *
-// *                                                                  *
-// * The  Geant4 software  is  copyright of the Copyright Holders  of *
-// * the Geant4 Collaboration.  It is provided  under  the terms  and *
-// * conditions of the Geant4 Software License,  included in the file *
-// * LICENSE and available at  http://cern.ch/geant4/license .  These *
-// * include a list of copyright holders.                             *
-// *                                                                  *
-// * Neither the authors of this software system, nor their employing *
-// * institutes,nor the agencies providing financial support for this *
-// * work  make  any representation or  warranty, express or implied, *
-// * regarding  this  software system or assume any liability for its *
-// * use.  Please see the license in the file  LICENSE  and URL above *
-// * for the full disclaimer and the limitation of liability.         *
-// *                                                                  *
-// * This  code  implementation is the result of  the  scientific and *
-// * technical work of the GEANT4 collaboration.                      *
-// * By using,  copying,  modifying or  distributing the software (or *
-// * any work based  on the software)  you  agree  to acknowledge its *
-// * use  in  resulting  scientific  publications,  and indicate your *
-// * acceptance of all terms of the Geant4 Software license.          *
+// * Author: Hubert Hu												  *
+// * Email: d.hu@ucl.ac.uk											  *
+// * Electronics engineer @ Mullard Space Science Lab				  *
+//
+// * version log history											  *
+// * v0.1	08/05/2015	convert from old test program to MDM project  *
 // ********************************************************************
 //
 // $Id: MDM_SipmSD.cc 75215 2013-10-29 16:07:06Z gcosmo $
@@ -101,30 +87,30 @@ G4bool MDM_SipmSD::ProcessHits(G4Step* step,
 	//DataStorage->FillEmptyEntriesUpToCurrentTrack(theTrack);
 
 	// if the particle is no optical photon, stop here
-	//G4cout << theTrack->GetParticleDefinition()->GetParticleName() <<G4endl;
+	G4cout << theTrack->GetParticleDefinition()->GetParticleName() <<G4endl;
 		
 	if((theTrack->GetParticleDefinition())!=(G4OpticalPhoton::OpticalPhotonDefinition()))
 	{
-		//G4int trackID = theTrack->GetTrackID();
+		G4int trackID = theTrack->GetTrackID();
 		//DataStorage->SetPhotonDetectorWasHit(trackID);
 		//Stop track.		
 		theTrack->SetTrackStatus(fStopAndKill);
-		return true;
+		return false;
 	}
 
-	//G4cout << G4OpticalPhoton::OpticalPhotonDefinition()->GetParticleName() << G4endl;
+	G4cout << G4OpticalPhoton::OpticalPhotonDefinition()->GetParticleName() << G4endl;
 	// if optical photon was created inside the sensitive detector, stop here
 	G4StepPoint * thePreStepPoint = step->GetPreStepPoint();
 	G4StepPoint * thePostStepPoint = step->GetPostStepPoint();
 
-//	G4cout << theTrack->GetLogicalVolumeAtVertex()->GetName() << G4endl;
-//	G4cout << thePostStepPoint->GetPhysicalVolume()->GetLogicalVolume()->GetName() << G4endl;
-	if(theTrack->GetLogicalVolumeAtVertex() == thePreStepPoint->GetPhysicalVolume()->GetLogicalVolume())
+	G4cout << theTrack->GetLogicalVolumeAtVertex()->GetName() << G4endl;
+	G4cout << thePostStepPoint->GetPhysicalVolume()->GetLogicalVolume()->GetName() << G4endl;
+	if(theTrack->GetLogicalVolumeAtVertex() == thePostStepPoint->GetPhysicalVolume()->GetLogicalVolume())
 	{
 		// Stop track.
 		theTrack->SetTrackStatus(fStopAndKill);
 
-		return true;
+		return false;
 	}
 
 	// This is now a true hit
@@ -137,11 +123,8 @@ G4bool MDM_SipmSD::ProcessHits(G4Step* step,
 		return false;
 	}
 	*/
-
-	G4int trackID = theTrack->GetTrackID();
-
 	MDM_SipmHit* hit = new MDM_SipmHit();
-	hit->SetTrackID(trackID);
+	hit->SetTrackID(theTrack->GetTrackID());
 	G4ThreeVector hitPoint = (thePreStepPoint->GetPosition() + thePostStepPoint->GetPosition())/2;  // take hit position at middle of pre and post step
 	hit->SetPos(hitPoint);
 

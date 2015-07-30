@@ -1,26 +1,11 @@
 //
 // ********************************************************************
-// * License and Disclaimer                                           *
-// *                                                                  *
-// * The  Geant4 software  is  copyright of the Copyright Holders  of *
-// * the Geant4 Collaboration.  It is provided  under  the terms  and *
-// * conditions of the Geant4 Software License,  included in the file *
-// * LICENSE and available at  http://cern.ch/geant4/license .  These *
-// * include a list of copyright holders.                             *
-// *                                                                  *
-// * Neither the authors of this software system, nor their employing *
-// * institutes,nor the agencies providing financial support for this *
-// * work  make  any representation or  warranty, express or implied, *
-// * regarding  this  software system or assume any liability for its *
-// * use.  Please see the license in the file  LICENSE  and URL above *
-// * for the full disclaimer and the limitation of liability.         *
-// *                                                                  *
-// * This  code  implementation is the result of  the  scientific and *
-// * technical work of the GEANT4 collaboration.                      *
-// * By using,  copying,  modifying or  distributing the software (or *
-// * any work based  on the software)  you  agree  to acknowledge its *
-// * use  in  resulting  scientific  publications,  and indicate your *
-// * acceptance of all terms of the Geant4 Software license.          *
+// * Author: Hubert Hu												  *
+// * Email: d.hu@ucl.ac.uk											  *
+// * Electronics engineer @ Mullard Space Science Lab				  *
+
+// * version log history											  *
+// * v0.1	08/05/2015	convert from old test program to MDM project  *
 // ********************************************************************
 //
 // $Id: MDM_EventAction.cc 75117 2013-10-28 09:38:37Z gcosmo $
@@ -133,22 +118,19 @@ void MDM_EventAction::EndOfEventAction(const G4Event* event)
 	
 	G4cout << " Total Hits in the scintillator: " << n_scint_hit << G4endl;
 
-	/*
 	for(int i=0;i<n_scint_hit;i++)
 	{
 		G4cout << "----Hit #" <<i << G4endl;
 		(*scintHC)[i]->Print();
 	}
-	*/
+	
 	G4cout << " Total Hits in the SiPM: " << n_sipm_hit << G4endl;
 
-	/*
 	for(int i=0;i<n_sipm_hit;i++)
 	{
 		G4cout << "----Hit #" <<i << G4endl;
 		(*sipmHC)[i]->Print();
 	}
-	*/
 
 
 

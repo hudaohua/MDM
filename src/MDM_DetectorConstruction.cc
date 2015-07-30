@@ -1,27 +1,16 @@
 //
-// ********************************************************************
-// * License and Disclaimer                                           *
-// *                                                                  *
-// * The  Geant4 software  is  copyright of the Copyright Holders  of *
-// * the Geant4 Collaboration.  It is provided  under  the terms  and *
-// * conditions of the Geant4 Software License,  included in the file *
-// * LICENSE and available at  http://cern.ch/geant4/license .  These *
-// * include a list of copyright holders.                             *
-// *                                                                  *
-// * Neither the authors of this software system, nor their employing *
-// * institutes,nor the agencies providing financial support for this *
-// * work  make  any representation or  warranty, express or implied, *
-// * regarding  this  software system or assume any liability for its *
-// * use.  Please see the license in the file  LICENSE  and URL above *
-// * for the full disclaimer and the limitation of liability.         *
-// *                                                                  *
-// * This  code  implementation is the result of  the  scientific and *
-// * technical work of the GEANT4 collaboration.                      *
-// * By using,  copying,  modifying or  distributing the software (or *
-// * any work based  on the software)  you  agree  to acknowledge its *
-// * use  in  resulting  scientific  publications,  and indicate your *
-// * acceptance of all terms of the Geant4 Software license.          *
-// ********************************************************************
+// **********************************************************************************************
+// * Author: Hubert Hu												  *
+// * Email: d.hu@ucl.ac.uk											  *
+// * Electronics engineer @ Mullard Space Science Lab				  *
+
+// * version log history																		*
+// * v0.1	08/05/2015	convert from old test program to MDM project							*
+// * v0.2	02/06/2015	Code corrected for proper optical surface performance.					*
+// *					The silicon detector now can detect the photons properly.				*
+// *					The previous mistake is due to use the G4LogicalBoarderSurface class	*
+// *					instead of G4LogicalSkinSurface class to define the surface property.	*
+// ***********************************************************************************************
 //
 // $Id: MDM_DetectorConstruction.cc 75117 2013-10-28 09:38:37Z gcosmo $
 //
@@ -169,11 +158,11 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	The emission graph in the datasheet onlys shows effecitve ragne from 300nm to 700nm.
 	**************************************************************************************************************************************************/
 	G4double Scnt_SLOW[nEntries] = {
-		0.00,0.00,0.00,0.00,0.01,
+		0.01,0.01,0.01,0.01,0.01,
 		0.04,0.10,0.14,0.19,0.32,
 		0.60,0.86,0.99,0.84,0.65,
-		0.39,0.20,0.15,0.01,0.00,
-		0.00,0.00,0.00,0.00,0.00
+		0.39,0.20,0.15,0.01,0.01,
+		0.01,0.01,0.01,0.01,0.01
 	};
 
 	// defining an object of the G4MaterialPropertiesTable specific to CsI
@@ -268,28 +257,208 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	/*********************************************************************************************************************************************
 	* Define the main detector's wrapping material optical property
 	*********************************************************************************************************************************************/
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//	//NOTE: possible Properties:
+//         "RINDEX":			(spectrum (in dependence of the photon energy))		(obligatory property!)
+//		defines the refraction index of the material, used for boundary processes, Cerenkov radiation and Rayleigh scattering
+//         "ABSLENGTH":			(spectrum (in dependence of the photon energy))
+//		defines the absorption length (absorption spectrum) of the material, used for the "normal" absorption of optical photons (default is infinity, i.e. no absorption)
+//		("ABSLENGTH" should not be specified for WLS materials, the absorption length for the WLS process is specified by "WLSABSLENGTH")
+//         "RAYLEIGH":			(spectrum (in dependence of the photon energy))
+//		defines the absorption length of the material, used for the rayleigh scattering of optical photons (default is infinity, i.e. no scattering)
+//
+//         "SCINTILLATIONYIELD":	(constant value (energy independent))			(obligatory property for scintillator materials!)
+//		defines the mean number of photons, emitted per MeV energy deposition in the scintillator material (the real number is Poisson/Gauss distributed)
+//		(can also be specified separately for different particles by putting "ELECTRON...", "PROTON...", "DEUTERON...", "TRITON...", "ALPHA...", "ION..." infront of "SCINTILLATIONYIELD")
+//		(default is 0, i.e. no scintillation process)
+//         "RESOLUTIONSCALE":		(constant value (energy independent))
+//		defines the intrinsic resolution of the scintillator material, used for the statistical distribution of the number of generated photons in the scintillation process
+//		(values > 1 result in a wider distribution, values < 1 result in a narrower distribution -> 1 should be chosen as default)
+//		(default is 0)
+//         "FASTCOMPONENT":		(spectrum (in dependence of the photon energy))		(at least one "...COMPONENT" is obligatory for scintillator materials!)
+//		defines the emission spectrum of the material, used for the fast scintillation process
+//         "SLOWCOMPONENT":		(spectrum (in dependence of the photon energy))		(at least one "...COMPONENT" is obligatory for scintillator materials!)
+//		defines the emission spectrum of the material, used for the slow scintillation process
+//         "FASTTIMECONSTANT":		(constant value (energy independent))
+//		defines the decay time (time between energy deposition and photon emission), used for the fast scintillation process (default is 0)
+//         "SLOWTIMECONSTANT":		(constant value (energy independent))
+//		defines the decay time (time between energy deposition and photon emission), used for the slow scintillation process (default is 0)
+//         "FASTSCINTILLATIONRISETIME":	(constant value (energy independent))
+//		defines the rise time (time between the start of the emission and the emission peak), used for the fast scintillation process (default is 0)
+//         "SLOWSCINTILLATIONRISETIME":	(constant value (energy independent))
+//		defines the rise time (time between the start of the emission and the emission peak), used for the slow scintillation process (default is 0)
+//         "YIELDRATIO":		(constant value (energy independent))			(obligatory property for scintillator materials, if both "...COMPONENT"s are specified!)
+//		defines relative strength of the fast scintillation process as a fraction of total scintillation yield (default is 0)
+//
+//         "WLSABSLENGTH":		(spectrum (in dependence of the photon energy))		(obligatory property for WLS materials!)
+//		defines the absorption length (absorption spectrum) of the material, used for the WLS process (default is infinity, i.e. no WLS process)
+//         "WLSCOMPONENT":		(spectrum (in dependence of the photon energy))		(obligatory property for WLS materials!)
+//		defines the emission spectrum of the material, used for the WLS process
+//         "WLSTIMECONSTANT":		(constant value (energy independent))
+//		defines the decay time (time between absorption and emission), used for the WLS process (default is 0)
+//         "WLSMEANNUMBERPHOTONS":	(constant value (energy independent))
+//		defines the mean number of photons, emitted for each photon that was absorbed by the WLS material
+//		(if specified, the real number of emitted photons is Poisson distributed, else the real number of emitted photons is 1)
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//	//NOTE: !!!!!! In order to understand simulation of optical surface properties (and esspecially the relations between the different options and parameters),
+//             you should definitely start with reading the diagram to be found at:
+//             http://hypernews.slac.stanford.edu/HyperNews/geant4/get/AUX/2012/05/23/23.20-70533-ces_in_geant4_revised.png
+//             (in http://hypernews.slac.stanford.edu/HyperNews/geant4/get/opticalphotons/445.html)
+//             The following comments are only a excerpt and CANNOT compete with the precision of this diagram !!!!!!
+//
+//      possible reflection models:
+//         glisur:  original and obsolete GEANT3 model
+//         unified: unified model (provides a range of different reflection mechanisms, cf. "possible Properties" below)
+//         LUT:     using the Look-Up-Table for the surface simulation
+//
+//      possible surface types:
+//         dielectric_dielectric: if both materials are dielectric, i.e. the reflection and refraction probabilities are defined by the refractive indices via the Fresnel equations
+//                                (the reflection probability CANNOT be defined by the material's reflectivity, cf. "REFLECTIVITY" below)
+//         dielectric_metal:      if one material is dielectric and the other is metal-like (i.e. the photons can only be reflected or absorbed but not refracted)
+//                                this surface type has to be used if the reflection probability should be defined by the material's reflectivity
+//                                (this does not work for dielectric_dielectric, cf. "REFLECTIVITY" below)
+//         dielectric_LUT:        if Look-Up-Tables should be used
+//         firsov:                for Firsov Process (O.B. Firsov, “Reflection of fast ions from a dense medium at glancing angles”, Sov. Phys.-Docklady, vol. 11, No. 8, pp.732-733, 1967)
+//         x_ray:                 for x-ray mirror process
+//
+//      possible surface finishs: (cf. http://hypernews.slac.stanford.edu/HyperNews/geant4/get/AUX/2012/05/23/23.20-70533-ces_in_geant4_revised.png !!!)
+//         for dielectric_metal:
+//            polished:             perfectly polished surface
+//                                  -> specular spike reflection
+//                                     (requiring the reflectivity of the metal)
+//            ground:               rough surface
+//                                  -> specular spike, specular lobe reflection, (diffuse) Lambertian reflection or back scattering
+//                                     (requiring the reflectivity of the metal and the angle alpha between a micro-facet normal and the average surface normal)
+//
+//         for dielectric_dielectric:
+//            polished:             perfectly polished surface
+//                                  -> specular spike reflection
+//                                     (requiring the refraction indices of both materials)
+//            ground:               rough surface
+//                                  -> specular spike, specular lobe reflection, (diffuse) Lambertian reflection or back scattering
+//                                     (requiring the refraction indices of both materials and the angle alpha between a micro-facet normal and the average surface normal)
+//            polishedfrontpainted: the volume has a perfectly polished surface and an absorbing paint without air gap
+//                                  -> specular spike reflection
+//                                     (requiring the reflectivity of the paint)
+//            groundfrontpainted:   the volume has a rough surface and an absorbing paint without air gap
+//                                  -> (diffuse) Lambertian reflection
+//                                     (requiring the reflectivity of the paint)
+//            polishedbackpainted:  the volume has a rough surface and a perfectly polished, absorbing paint with air gap
+//                                  -> volume-air surface: specular spike, specular lobe reflection, (diffuse) Lambertian reflection or back scattering
+//                                     (requiring the refraction indices of the volume material and the surface as well as the angle alpha between a micro-facet normal and the average surface normal)
+//                                  -> air-paint surface: specular spike reflection
+//                                     (requiring the reflectivity of the paint)
+//            groundbackpainted:    the volume has a rough surface and a rough, absorbing paint with air gap
+//                                  -> volume-air surface: specular spike, specular lobe reflection, (diffuse) Lambertian reflection or back scattering
+//                                     (requiring the refraction indices of the volume material and the surface as well as the angle alpha between a micro-facet normal and the average surface normal)
+//                                  -> air-paint surface: (diffuse) Lambertian reflection
+//                                     (requiring the reflectivity of the paint)
+//
+//         for the Look-Up-Table model:
+//            polishedlumirrorair:
+//            polishedlumirrorglue:
+//            polishedair:
+//            polishedteflonair:
+//            polishedtioair:
+//            polishedtyvekair:
+//            polishedvm2000air:
+//            polishedvm2000glue:
+//            etchedlumirrorair:
+//            etchedlumirrorglue:
+//            etchedair:
+//            etchedteflonair:
+//            etchedtioair:
+//            etchedtyvekair:
+//            etchedvm2000air:
+//            etchedvm2000glue:
+//            groundlumirrorair:
+//            groundlumirrorglue:
+//            groundair:
+//            groundteflonair:
+//            groundtioair:
+//            groundtyvekair:
+//            groundvm2000air:
+//            groundvm2000glue:
+//
+//      sigma alpha: defines the roughness of the surface (sigma alpha specifies the standard deviation of the distribution of the micro-facet normals in [rad])
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//NOTE: possible Properties (for reflection model "unified"):
+//         "RINDEX":				(spectrum (in dependence of the photon energy))			(obligatory property for surfaces with surface finish "...backpainted"!)
+//		in case of surface finish "...backpainted", defines the refraction index of the thin material layer between the surface and the paint
+//		(only used for boundary processes and only in case of surface finish "...backpainted")
+//         "REFLECTIVITY":			(spectrum (in dependence of the photon energy))
+//		does NOT IN ANY CASE define the reflectivity of the surface but defines (1 - absorption coefficient), which may make a difference:
+//			for dielectric_metal:      it is really the reflectivity of the metal, i.e. the probability that the photon is reflected at all
+//						   (every photon not absorbed by the metal will be reflected)
+//			for dielectric_dielectric: it is NOT the reflectivity but defines the absorption coefficient (absorption coefficient = 1 - "reflectivity") of a dirty surface
+//						   (every photon not absorbed by dirt will be reflected or refracted as normal for "dielectric_dielectric" surfaces and the reflectivity
+//						   for this process can be specified via "TRANSMITTANCE" or is calculated via the Fresnel equations, cf. "TRANSMITTANCE")
+//		(default is 1., i.e. nothing is absorbed)
+//         "REALRINDEX":			(spectrum (in dependence of the photon energy))
+//		defines the real part of the complex refraction index of the surface   //FIXME surface <-> material ???
+//		(in case that "REFLECTIVITY" is not specified and if "REALRINDEX" and "IMAGINARYRINDEX" are both specified,
+//		the refectivity is calculated from the complex refraction index via the Fresnel equations   //FIXME shouldn't it be two refraction indices???
+//		-> therefore, the complex refraction index should not be specified for surface type "dielectric_dielectric", cf. "REFLECTIVITY"
+//		   (if one wants to define the reflectivity of a "dielectric_dielectric" surface from the complex refraction index,
+//		   one has to calculate the transmittance via the Fresnel equations and specify it with "TRANSMITTANCE"))
+//         "IMAGINARYRINDEX":			(spectrum (in dependence of the photon energy))
+//		defines the imaginary part of the complex refraction index of the surface   //FIXME surface <-> material ???
+//		(in case that "REFLECTIVITY" is not specified and if "REALRINDEX" and "IMAGINARYRINDEX" are both specified,
+//		the refectivity is calculated from the complex refraction index via the Fresnel equations   //FIXME shouldn't it be two refraction indices???
+//		-> therefore, the complex refraction index should not be specified for surface type "dielectric_dielectric", cf. "REFLECTIVITY"
+//		   (if one wants to define the reflectivity of a "dielectric_dielectric" surface from the complex refraction index,
+//		   one has to calculate the transmittance via the Fresnel equations and specify it with "TRANSMITTANCE"))
+//         "EFFICIENCY":			(spectrum (in dependence of the photon energy))
+//		defines the detection efficiency of absorbed photons (default is 0)
+//         "TRANSMITTANCE":			(spectrum (in dependence of the photon energy))
+//		in case of "dielectric_dielectric" surfaces, defines the fraction of photons (reaching the surface despite of dirt (cf. "REFLECTIVITY"))
+//		which are refracted by the surface instead of being reflected
+//		(if "TRANSMITTANCE" is not specified, the transmittance is calculated from the (real) refraction indices of the two materials forming the surface via the Fresnel equations)
+//		(only used for boundary processes and only in case of surface type "dielectric_dielectric")
+//         "SPECULARSPIKECONSTANT":		(spectrum (in dependence of the photon energy))
+//		defines the probability for reflection at the average surface
+//		(only used in case of surface finish "ground" or "...backpainted", default is 0)
+//         "SPECULARLOBECONSTANT":		(spectrum (in dependence of the photon energy))
+//		defines the probability for reflection at a micro facet surface, i.e. the direction is smeared around the direction of the specular spike reflection
+//		(only used in case of surface finish "ground" or "...backpainted", default is 0)
+//         "BACKSCATTERCONSTANT":		(spectrum (in dependence of the photon energy))
+//		defines the probability of back scattering, caused by several reflections within a deep grove
+//		(only used in case of surface finish "ground" or "...backpainted", default is 0)
+//	    !!! the probability of internal (diffuse) Lambertian reflection can not be specified directly but is defined via
+//		    100% = "SPECULARSPIKECONSTANT" + "SPECULARLOBECONSTANT" + "BACKSCATTERCONSTANT" + Lambertian (-> default is 1) !!!
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// Define detector optical surface property
 	G4OpticalSurface* detectorWrap = new G4OpticalSurface("detectorWrap");
 	//G4LogicalBorderSurface* surface1 = new G4LogicalBorderSurface("detectorWrap", physDetector, physWorld,detectorWrap);
 
-	G4double sigma_alpha = 0.1;
+	//no refraction, only reflection or absorption
+	//G4double sigma_alpha = 0.1;
 	detectorWrap ->SetType (dielectric_metal);
 	detectorWrap ->SetFinish(polished); // polished
-	detectorWrap ->SetModel(unified);    // glisur was Geant3 model and expired.
-	detectorWrap ->SetSigmaAlpha(sigma_alpha);
+	detectorWrap ->SetModel(glisur);    // glisur was Geant3 model.
+	//detectorWrap ->SetSigmaAlpha(sigma_alpha);
 
 	const G4int num = 5;
 	G4double pp[num] = { 2.761*eV,2.485*eV,2.258*eV,2.071*eV,1.911*eV};
-	G4double reflectivity[num] = {0.99,0.99,0.99,0.99,0.99};   // QT throws exception when this is set to 1.0
-	G4double efficiency[num] = {0.0, 0.0, 0.0, 0.0, 0.0};
+	G4double reflectivity[num] = {0.75,0.75,0.75,0.75,0.75};   // QT throws exception when this is set to 1.0
+	G4double efficiency[num] = {0.8, 0.8, 0.8, 0.8, 0.8};  //define the detection efficiency of absorbed photons, default is 0.
 	G4double rindex[num] = {1.56,1.56,1.56,1.56,1.56};
+	//G4double specularlobe[num] = {0.3, 0.3, 0.3, 0.3, 0.3};  // temparaly data
+	//G4double specularspike[num] = {0.2, 0.2, 0.2, 0.2, 0.2}; // temparaly data
+	//G4double backscatter[num] = {0.1, 0.1, 0.1, 0.1, 0.1};   // temparaly data
 
 	G4MaterialPropertiesTable* detectorWrapProperty = new G4MaterialPropertiesTable();
 	detectorWrapProperty->AddProperty("REFLECTIVITY",pp,reflectivity,num);
 	detectorWrapProperty->AddProperty("EFFICIENCY",pp,efficiency,num);	
 	detectorWrapProperty->AddProperty("RINDEX",pp,rindex,num);
 
+	//detectorWrapProperty -> AddProperty("SPECULARLOBECONSTANT",pp,specularlobe,NUM);
+	//detectorWrapProperty -> AddProperty("SPECULARSPIKECONSTANT",pp,specularspike,NUM);
+	//detectorWrapProperty -> AddProperty("BACKSCATTERCONSTANT",pp,backscatter,NUM);
+	
 	detectorWrap->SetMaterialPropertiesTable(detectorWrapProperty);
 
 
@@ -329,30 +498,28 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
   
 	// Define the optical surface between detector and sensor
 	G4OpticalSurface* PhotonSensor_op_surf = new G4OpticalSurface("PhotonSensor_op_surf");
-//	G4LogicalBorderSurface* surface2 = new G4LogicalBorderSurface("PhotonSensor_op_surf", physDetector, physSensor,PhotonSensor_op_surf);
 
-
-
-	sigma_alpha = 0.1;
+	//sigma_alpha = 0.0; //surface roughness
 	PhotonSensor_op_surf ->SetType (dielectric_metal);
 	PhotonSensor_op_surf ->SetFinish(polished);
-	PhotonSensor_op_surf ->SetModel(unified);  //was glisur
+	PhotonSensor_op_surf ->SetModel(glisur);  //was glisur
 	//PhotonSensor_op_surf ->SetSigmaAlpha(sigma_alpha);
 
 	const G4int num1 = 5;
 	G4double pp1[num1] = { 2.761*eV,2.485*eV,2.258*eV,2.071*eV,1.911*eV};
-	G4double reflectivity1[num1] = {1.0,1.0,1.0,1.0,1.0};   // 10% reflectivity
-	G4double efficiency1[num1] = {0.0, 0.0, 0.0, 0.0, 0.0};
-	G4double rindex1[num1] = {1.56,1.56,1.56,1.56,1.56};
+	G4double reflectivity1[num1] = {0.9,0.9,0.9,0.9,0.9};   // 10% reflectivity
+	G4double efficiency1[num1] = {0.8, 0.8, 0.8, 0.8, 0.8};
+//	G4double rindex1[num1] = {1.56,1.56,1.56,1.56,1.56};
 
 	G4MaterialPropertiesTable* PhotonSensor_op_surf_Property = new G4MaterialPropertiesTable();
 	PhotonSensor_op_surf_Property->AddProperty("REFLECTIVITY",pp1,reflectivity1,num1);
-//	PhotonSensor_op_surf_Property->AddProperty("EFFICIENCY",pp1,efficiency1,num1);	
-	PhotonSensor_op_surf_Property->AddProperty("RINDEX",pp1,rindex1,num1);
+	PhotonSensor_op_surf_Property->AddProperty("EFFICIENCY",pp1,efficiency1,num1);	
+//	PhotonSensor_op_surf_Property->AddProperty("RINDEX",pp1,rindex1,num1);
 
-	PhotonSensor_op_surf_Property->AddProperty("SPECULARLOBECONSTANT", pp1,reflectivity1, num1);   //0
-	PhotonSensor_op_surf_Property->AddProperty("SPECULARSPIKECONSTANT", pp1,efficiency1, num1);    //1
-	PhotonSensor_op_surf_Property->AddProperty("BACKSCATTERCONSTANT", pp1,reflectivity1, num1);    //0
+//	PhotonSensor_op_surf_Property->AddProperty("SPECULARLOBECONSTANT", pp1,reflectivity1, num1);   //0
+//	PhotonSensor_op_surf_Property->AddProperty("SPECULARSPIKECONSTANT", pp1,efficiency1, num1);    //1
+//	PhotonSensor_op_surf_Property->AddProperty("BACKSCATTERCONSTANT", pp1,reflectivity1, num1);    //0
+
 
 	PhotonSensor_op_surf->SetMaterialPropertiesTable(PhotonSensor_op_surf_Property);
 	

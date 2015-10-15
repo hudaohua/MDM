@@ -84,28 +84,31 @@ G4bool MDM_SipmSD::ProcessHits(G4Step* step,
                                      G4TouchableHistory*)
 {  
 	G4Track* theTrack = step->GetTrack();
+	G4int trackID = theTrack->GetTrackID();
 	//DataStorage->FillEmptyEntriesUpToCurrentTrack(theTrack);
 
 	// if the particle is no optical photon, stop here
-	G4cout << theTrack->GetParticleDefinition()->GetParticleName() <<G4endl;
+	//G4cout << theTrack->GetParticleDefinition()->GetParticleName() <<G4endl;
 		
 	if((theTrack->GetParticleDefinition())!=(G4OpticalPhoton::OpticalPhotonDefinition()))
 	{
-		G4int trackID = theTrack->GetTrackID();
+		//trackID = theTrack->GetTrackID();
 		//DataStorage->SetPhotonDetectorWasHit(trackID);
 		//Stop track.		
 		theTrack->SetTrackStatus(fStopAndKill);
 		return false;
 	}
 
-	G4cout << G4OpticalPhoton::OpticalPhotonDefinition()->GetParticleName() << G4endl;
+
 	// if optical photon was created inside the sensitive detector, stop here
 	G4StepPoint * thePreStepPoint = step->GetPreStepPoint();
 	G4StepPoint * thePostStepPoint = step->GetPostStepPoint();
 
-	G4cout << theTrack->GetLogicalVolumeAtVertex()->GetName() << G4endl;
-	G4cout << thePostStepPoint->GetPhysicalVolume()->GetLogicalVolume()->GetName() << G4endl;
-	if(theTrack->GetLogicalVolumeAtVertex() == thePostStepPoint->GetPhysicalVolume()->GetLogicalVolume())
+	//G4cout << theTrack->GetLogicalVolumeAtVertex()->GetName() << G4endl;
+	//G4cout << thePostStepPoint->GetPhysicalVolume()->GetLogicalVolume()->GetName() << G4endl;
+
+
+	if(theTrack->GetLogicalVolumeAtVertex()->GetName() == "Sensor" )
 	{
 		// Stop track.
 		theTrack->SetTrackStatus(fStopAndKill);
@@ -124,7 +127,7 @@ G4bool MDM_SipmSD::ProcessHits(G4Step* step,
 	}
 	*/
 	MDM_SipmHit* hit = new MDM_SipmHit();
-	hit->SetTrackID(theTrack->GetTrackID());
+	hit->SetTrackID(trackID);
 	G4ThreeVector hitPoint = (thePreStepPoint->GetPosition() + thePostStepPoint->GetPosition())/2;  // take hit position at middle of pre and post step
 	hit->SetPos(hitPoint);
 

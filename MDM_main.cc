@@ -74,7 +74,7 @@ int main(int argc,char** argv)
   runManager->SetUserInitialization(new MDM_PhysicsList);
     
   // User action initialization
-  runManager->SetUserInitialization(new MDM_ActionInitialization(detConstruction));
+  runManager->SetUserInitialization(new MDM_ActionInitialization(detConstruction,"result"));
 
   // Initialize G4 kernel
   //
@@ -102,8 +102,7 @@ int main(int argc,char** argv)
 #ifdef G4UI_USE
     G4UIExecutive* ui = new G4UIExecutive(argc, argv);
 #ifdef G4VIS_USE
-    UImanager->ApplyCommand("/control/execute init_vis.mac"); 
-#else
+    UImanager->ApplyCommand("/control/execute init_vis.mac");
     UImanager->ApplyCommand("/control/execute init.mac"); 
 #endif
     ui->SessionStart();

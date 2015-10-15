@@ -19,6 +19,10 @@
 #include "G4VUserDetectorConstruction.hh"
 #include "globals.hh"
 
+//from sample code
+#include "G4Sipm.hh"
+#include "housing/G4SipmHousing.hh"
+
 class G4VPhysicalVolume;
 class G4LogicalVolume;
 
@@ -40,6 +44,20 @@ class MDM_DetectorConstruction : public G4VUserDetectorConstruction
     const G4VPhysicalVolume* GetShape1PV() const;
     const G4VPhysicalVolume* GetShape2PV() const;
 
+
+    //from sample code
+
+	G4SipmHousing* housing;
+
+	/**
+    * @return G4SipmModel - the SiPM model.
+	 */
+	G4SipmModel* getSipmModel() const;
+	/**
+	 * @return G4SipmHousing - the housing instance.
+	 */
+	G4SipmHousing* getSipmHousing() const;
+
   protected:
     G4LogicalVolume*  fScoringVolume;
 
@@ -47,6 +65,9 @@ class MDM_DetectorConstruction : public G4VUserDetectorConstruction
   private:
 	G4VPhysicalVolume* physDetector;
 	G4VPhysicalVolume* physSensor;
+
+
+
 };
 
 // inline functions

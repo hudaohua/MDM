@@ -19,9 +19,16 @@
 #include "G4UserRunAction.hh"
 #include "globals.hh"
 
+//from sample code
+#include <string>
+
+
 class G4Timer;
 class G4Run;
 class G4LogicalVolume;
+
+//from sample code
+class PersistencyHandler;
 
 /// Run action class
 ///
@@ -32,15 +39,24 @@ class G4LogicalVolume;
 class MDM_RunAction : public G4UserRunAction
 {
   public:
-    MDM_RunAction();
+    MDM_RunAction(std::string filename);
     virtual ~MDM_RunAction();
 
     virtual G4Run* GenerateRun();
     virtual void BeginOfRunAction(const G4Run*);
     virtual void   EndOfRunAction(const G4Run*);
 
-private:
+    std::string getFilename() const;
+
+    PersistencyHandler* getPersistencyHandler() const;
+
+
+  private:
 	G4Timer* fTimer;
+	//from sample code
+	std::string filename;
+	PersistencyHandler* persistencyHandler;
+
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

@@ -24,6 +24,14 @@ endif()
 include(${Geant4_USE_FILE})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+#----------------------------------------------------------------------------
+# Load the g4sipm module
+add_subdirectory(externals/g4sipm)
+include_directories(externals/g4sipm/g4sipm/include)
+include_directories(externals/g4sipm/externals/jansson/src)
+include_directories(externals/g4sipm/externals/gtest/include)
+
+
 
 #----------------------------------------------------------------------------
 # Locate sources and headers for this project
@@ -32,11 +40,27 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 
+
+# Add persistency sources and headers.
+set(sources ${sources} "${PROJECT_SOURCE_DIR}/src/persistency/PersistencyHandler.cc" 
+   # "${PROJECT_SOURCE_DIR}/src/persistency/PersistencyHandlerMessenger.cc" 
+    "${PROJECT_SOURCE_DIR}/src/persistency/PersistVisitor.cc" 
+    "${PROJECT_SOURCE_DIR}/src/persistency/PersistVisitorFactory.cc" 
+    "${PROJECT_SOURCE_DIR}/src/persistency/JsonPersistVisitor.cc")
+set(headers ${headers} "${PROJECT_SOURCE_DIR}/include/persistency/PersistencyHandler.hh" 
+   # "${PROJECT_SOURCE_DIR}/include/persistency/PersistencyHandlerMessenger.hh" 
+    "${PROJECT_SOURCE_DIR}/include/persistency/PersistVisitor.hh" 
+    "${PROJECT_SOURCE_DIR}/include/persistency/PersistVisitorFactory.hh" 
+    "${PROJECT_SOURCE_DIR}/include/persistency/JsonPersistVisitor.hh")
+
 #----------------------------------------------------------------------------
 # Add the executable, and link it to the Geant4 libraries
 #
-add_executable(MDM_main MDM_main.cc ${sources} ${headers})
-target_link_libraries(MDM_main ${Geant4_LIBRARIES})
+add_executable(MDM_main MDM_main.cc ${sources} ${headers})#
+#target_link_libraries(MDM_main ${Geant4_LIBRARIES})
+
+# add the link to G4sipm
+target_link_libraries(MDM_main g4sipm boost_date_time jansson ${Geant4_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
@@ -49,6 +73,8 @@ set(MDM_SCRIPTS
   run1.mac
   run2.mac
   vis.mac
+  g4sipm.mac
+
   )
 
 foreach(_script ${MDM_SCRIPTS})

@@ -25,28 +25,28 @@
 #include "G4SystemOfUnits.hh"
 #include "g4root.hh"
 #include <string>
-#include <string.h>
+//#include <string.h>
 #include <sstream>
+
+// from sample code
+#include "G4SipmUiMessenger.hh"
+//#include "ParticleSourceMessenger.hh"
+//#include "DetectorConstruction.hh"
+#include "persistency/PersistencyHandler.hh"
+#include "persistency/PersistVisitorFactory.hh"
+
 
 //#include "boost/lexical_cast.hpp"
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-MDM_RunAction::MDM_RunAction()
-: G4UserRunAction(), fTimer(0)
+MDM_RunAction::MDM_RunAction(std::string _filename)
+: G4UserRunAction(), fTimer(0), filename(_filename)
 { 
-  // add new units for dose
-  // 
-  const G4double milligray = 1.e-3*gray;
-  const G4double microgray = 1.e-6*gray;
-  const G4double nanogray  = 1.e-9*gray;  
-  const G4double picogray  = 1.e-12*gray;
-   
-  new G4UnitDefinition("milligray", "milliGy" , "Dose", milligray);
-  new G4UnitDefinition("microgray", "microGy" , "Dose", microgray);
-  new G4UnitDefinition("nanogray" , "nanoGy"  , "Dose", nanogray);
-  new G4UnitDefinition("picogray" , "picoGy"  , "Dose", picogray);  
+
+	//from sample code
+persistencyHandler = new PersistencyHandler(PersistVisitorFactory::getInstance()->create(filename));
 
   fTimer = new G4Timer;
 
@@ -69,10 +69,10 @@ MDM_RunAction::MDM_RunAction()
   //
   
   // Creating histograms
-  analysisManager->CreateH1("h1_1","Edep in scintillator", 1000, 0., 1*MeV);
-  analysisManager->CreateH1("h1_2","Photons hit in scintillator", 10000, 0., 10000);
-  analysisManager->CreateH1("h1_3","trackL in scintillator", 1000, 0., 0.5*cm);
-  analysisManager->CreateH1("h1_4","Photons hit in sipm", 10000, 0., 10000);
+  analysisManager->CreateH1("h1_1","Edep in scintillator", 1000, 0.0, 10.0*eV,"eV");
+  analysisManager->CreateH1("h1_2","Photons hit in scintillator", 1000, 0., 1000);
+  analysisManager->CreateH1("h1_3","trackL in scintillator", 1000, 0.0, 0.5*cm,"cm");
+  analysisManager->CreateH1("h1_4","Photons hit in sipm", 1000, 0., 100);
   analysisManager->CreateH2("h2_1","Photons hit position in sipm",1000,-1*mm,1*mm,1000,-1*mm,1*mm,"mm","mm","x_pos","y_pos");
 
 
@@ -117,6 +117,9 @@ void MDM_RunAction::BeginOfRunAction(const G4Run* aRun)
 	G4cout <<"### Run"<< run_ID << " start."<< G4endl;
 	fTimer->Start();
 	
+	//from sample code
+	persistencyHandler->open(filename);
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -131,101 +134,39 @@ void MDM_RunAction::EndOfRunAction(const G4Run* run)
   if (nofEvents == 0) return;
   
 
-  /*
-  const MDM_Run* MDM_Run = static_cast<const MDM_Run*>(run);
-
-  // Compute dose
-  //
-  G4double edep  = MDM_Run->GetEdep();
-  G4double edep2 = MDM_Run->GetEdep2();
-  G4double rms = edep2 - edep*edep/nofEvents;
-  if (rms > 0.) rms = std::sqrt(rms); else rms = 0.;
-
-  const MDM_DetectorConstruction* detectorConstruction
-   = static_cast<const MDM_DetectorConstruction*>
-     (G4RunManager::GetRunManager()->GetUserDetectorConstruction());
-  G4double mass = detectorConstruction->GetScoringVolume()->GetMass();
-  G4double dose = edep/mass;
-  G4double rmsDose = rms/mass;
-
-  // Run conditions
-  //  note: There is no primary generator action object for "master"
-  //        run manager for multi-threaded mode.
-  const MDM_PrimaryGeneratorAction* generatorAction
-   = static_cast<const MDM_PrimaryGeneratorAction*>
-     (G4RunManager::GetRunManager()->GetUserPrimaryGeneratorAction());
-  G4String runCondition;
-  if (generatorAction)
-  {
-    const G4ParticleGun* particleGun = generatorAction->GetParticleGun();
-    runCondition += particleGun->GetParticleDefinition()->GetParticleName();
-    runCondition += " of ";
-    G4double particleEnergy = particleGun->GetParticleEnergy();
-    runCondition += G4BestUnit(particleEnergy,"Energy");
-  }
           
-  // Print
-  //  
-  if (IsMaster()) {
-    G4cout
-     << "\n--------------------End of Global Run-----------------------";
-  }
-  else {
-    G4cout
-     << "\n--------------------End of Local Run------------------------";
-  }
-  
-  G4cout
-     << "\n The run consists of " << nofEvents << " "<< runCondition
-     << "\n Dose in scoring volume : " 
-     << G4BestUnit(dose,"Dose") << " +- " << G4BestUnit(rmsDose,"Dose")
-     << "\n------------------------------------------------------------\n"
-     << G4endl;
-
-	  */
-
-
-    // print histogram statistics
+  // print histogram statistics
   //
   G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
-  if ( analysisManager->GetH1(1) ) {
-    G4cout << "\n ----> print histograms statistic ";
-    if(isMaster) {
-      G4cout << "for the entire run \n" << G4endl; 
-    }
-    else {
-      G4cout << "for the local thread \n" << G4endl; 
-    }
-    
-    G4cout << " Escint : mean = " 
-       << G4BestUnit(analysisManager->GetH1(1)->mean(), "Energy") 
-       << " rms = " 
-       << G4BestUnit(analysisManager->GetH1(1)->rms(),  "Energy") << G4endl;
-    
-    G4cout << " Esipm : mean = " 
-       << G4BestUnit(analysisManager->GetH1(2)->mean(), "Energy") 
-       << " rms = " 
-       << G4BestUnit(analysisManager->GetH1(2)->rms(),  "Energy") << G4endl;
-    
-    G4cout << " Lscint : mean = " 
-      << G4BestUnit(analysisManager->GetH1(3)->mean(), "Length") 
-      << " rms = " 
-      << G4BestUnit(analysisManager->GetH1(3)->rms(),  "Length") << G4endl;
 
-    G4cout << " Lsipm : mean = " 
-      << G4BestUnit(analysisManager->GetH1(4)->mean(), "Length") 
-      << " rms = " 
-      << G4BestUnit(analysisManager->GetH1(4)->rms(),  "Length") << G4endl;
-  }
-
-  G4cout<<"number of even = "<<run->GetNumberOfEvent()<<" "<< *fTimer << G4endl;
+  G4cout<<"number of even = "<<nofEvents<<" "<< *fTimer << G4endl;
 
 // Save histograms
 
-//analysisManager->Write();
+analysisManager->Write();
 analysisManager->CloseFile();
 
+//from sample code
+// Persist run settings.
+//persistencyHandler->persist(G4SipmUiMessenger::getInstance());
+//persistencyHandler->persist(ParticleSourceMessenger::getInstance());
+// Get detector.
+const MDM_DetectorConstruction* detector =
+		(const MDM_DetectorConstruction*) G4RunManager::GetRunManager()->GetUserDetectorConstruction();
+persistencyHandler->persist(detector->getSipmHousing()->getSipm()->getModel());
+persistencyHandler->persist(detector->getSipmHousing()->getSipm()->getModel()->getVoltageTraceModel());
+// Close output.
+persistencyHandler->close();
 
+
+}
+
+std::string MDM_RunAction::getFilename() const {
+	return filename;
+}
+
+PersistencyHandler* MDM_RunAction::getPersistencyHandler() const {
+	return persistencyHandler;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

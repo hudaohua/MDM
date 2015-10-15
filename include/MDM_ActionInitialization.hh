@@ -17,6 +17,7 @@
 #define MDM_ActionInitialization_h 1
 
 #include "G4VUserActionInitialization.hh"
+#include <string>
 
 class MDM_DetectorConstruction;
 /// Action initialization class.
@@ -24,7 +25,7 @@ class MDM_DetectorConstruction;
 class MDM_ActionInitialization : public G4VUserActionInitialization
 {
   public:
-    MDM_ActionInitialization(MDM_DetectorConstruction*);
+    MDM_ActionInitialization(MDM_DetectorConstruction*,std::string path);
     virtual ~MDM_ActionInitialization();
 
     virtual void BuildForMaster() const;
@@ -32,6 +33,8 @@ class MDM_ActionInitialization : public G4VUserActionInitialization
 
 private:
 	MDM_DetectorConstruction* fDetConstruction;
+	std::string filename;
+
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

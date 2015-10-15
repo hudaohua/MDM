@@ -21,15 +21,20 @@
 
 #include "MDM_Run.hh"
 
-
+#include "MDM_RunAction.hh"
 
 #include "G4Event.hh"
 #include "G4RunManager.hh"
 #include "G4SDManager.hh"
 #include "G4HCofThisEvent.hh"
 #include "G4UnitsTable.hh"
+#include "G4SystemOfUnits.hh"
+#include "G4Timer.hh"
 
 #include "g4root.hh"
+
+#include "persistency/PersistencyHandler.hh"
+#include <G4DigiManager.hh>
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -89,6 +94,7 @@ void MDM_EventAction::EndOfEventAction(const G4Event* event)
 
 	if(fScintHCID<0 || fSipmHCID<0) return;
 	
+	G4cout<<"write to the root "<<G4endl;
 
 	// get hits collections
 	MDM_CalorHitsCollection* scintHC = GetHitsCollection(fScintHCID,event);
@@ -118,6 +124,8 @@ void MDM_EventAction::EndOfEventAction(const G4Event* event)
 	
 	G4cout << " Total Hits in the scintillator: " << n_scint_hit << G4endl;
 
+	// commented out on 26 Aug 2015 for reducing the output message
+	/*
 	for(int i=0;i<n_scint_hit;i++)
 	{
 		G4cout << "----Hit #" <<i << G4endl;
@@ -131,27 +139,11 @@ void MDM_EventAction::EndOfEventAction(const G4Event* event)
 		G4cout << "----Hit #" <<i << G4endl;
 		(*sipmHC)[i]->Print();
 	}
-
-
-
-	/*
-	G4int eventID = event->GetEventID();
-	G4int printModulo = G4RunManager::GetRunManager()->GetPrintProgress();
-	if ( (printModulo > 0) && ( eventID % printModulo == 0)) {
-		G4cout << "----> End of event: " << eventID << G4endl;
-		PrintEventStatistics(scintHit->GetEdep(),scintHit->GetTrackLength(), sipmHit->GetEdep(), sipmHit->GetTrackLength());
-	}
 	*/
-
- 
-  // accumulate statistics in MDM_Run
- // MDM_Run* run = static_cast<MDM_Run*>(
-  //      G4RunManager::GetRunManager()->GetNonConstCurrentRun());
- // run->AddEdep(fEdep);
 
 
   // get analysis manager
-	// 2015-5-31 temperaly remove the root file generator to speed up the simulation
+
   G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
 
   //G4cout <<"debug1" << G4endl;
@@ -160,12 +152,9 @@ void MDM_EventAction::EndOfEventAction(const G4Event* event)
   if(n_scint_hit>0)
   {
 	  analysisManager->FillH1(1, scintHit->GetTotalEdep());
-	 // G4cout <<"debug2" << G4endl;
 	  analysisManager->FillH1(2, G4double(n_scint_hit));
-	 // G4cout <<"debug3" << G4endl;
 	  analysisManager->FillH1(3, scintHit->GetTotalTrackLength());
-	 // G4cout <<"debug4" << G4endl;
-	  analysisManager->FillH1(4, G4double(n_sipm_hit));  // total photons per event
+	  analysisManager->FillH1(4, G4double(n_sipm_hit));  // total photons detected per event
 	  
   }else
   {
@@ -180,25 +169,65 @@ void MDM_EventAction::EndOfEventAction(const G4Event* event)
   {
 	for(int i=0;i<n_sipm_hit;i++)
 	{
-		//G4cout << "----Hit #" <<i << G4endl;
-		//(*sipmHC)[i]->Print();
 		sipmHit = (*sipmHC)[i];
 		G4ThreeVector pos = sipmHit->GetPos();
-		analysisManager->FillH2(1,pos.x(),pos.y(),1.0);
+		analysisManager->FillH2(1,pos.getX(),pos.getY(),1.0);
 	}
-	//G4cout <<"debug5" << G4endl;
+
   }
   
 	  
 
-  // fill ntuple
- // analysisManager->FillNtupleDColumn(0, fEnergyAbs);
- // analysisManager->FillNtupleDColumn(1, fEnergyGap);
- // analysisManager->FillNtupleDColumn(2, fTrackLAbs);
- // analysisManager->FillNtupleDColumn(3, fTrackLGap);
- // analysisManager->AddNtupleRow();  
-
   PrintEventStatistics(scintHit->GetTotalEdep(),scintHit->GetTotalTrackLength(),sipmHit->GetPhotons(),sipmHit->GetTrackID());
+
+  //G4Sipm sample code
+	PersistencyHandler* persistency =
+			((MDM_RunAction*) G4RunManager::GetRunManager()->GetUserRunAction())->getPersistencyHandler();
+	// Run all digitizer modules.
+	G4DigiManager* digiManager = G4DigiManager::GetDMpointer();
+	G4DCtable* dcTable = digiManager->GetDCtable();
+	G4cout<< "dcTable numbers "<<dcTable->entries()<<G4endl;
+	for (int i = 0; i < dcTable->entries(); i++) {
+		G4String dmName = dcTable->GetDMname(i);
+		G4VDigitizerModule* dm = digiManager->FindDigitizerModule(dmName);
+		if (dm) {
+			dm->Digitize();
+		}
+	}
+	G4Timer timer;
+	timer.Start();
+	// Process hits collections.
+
+	G4HCofThisEvent* hCof = event->GetHCofThisEvent();
+	if (hCof != NULL) {
+		for (int i = 0; i < hCof->GetCapacity(); ++i) {
+			G4VHitsCollection* hc = hCof->GetHC(i);
+			if (hc != NULL) {
+				if (dynamic_cast<G4SipmHitsCollection*>(hc)) {
+					persistency->persist((G4SipmHitsCollection*) hc);
+				}
+			}
+		}
+	}
+
+	// Process digi collections.
+	G4DCofThisEvent* dCof = event->GetDCofThisEvent();
+	if (dCof != NULL) {
+		for (int i = 0; i < dCof->GetCapacity(); ++i) {
+			G4VDigiCollection* dc = dCof->GetDC(i);
+			if (dc != NULL) {
+				if (dynamic_cast<G4SipmDigiCollection*>(dc)) {
+					persistency->persist((G4SipmDigiCollection*) dc);
+				}
+				if (dynamic_cast<G4SipmVoltageTraceDigiCollection*>(dc)) {
+					persistency->persist((G4SipmVoltageTraceDigiCollection*) dc);
+				}
+			}
+		}
+	}
+
+	timer.Stop();
+	std::cout << "EventAction::EndOfEventAction(): persist time (" << timer << ")." << std::endl;
 
 
 }

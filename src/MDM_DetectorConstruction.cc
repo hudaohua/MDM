@@ -44,6 +44,15 @@
 #include "G4LogicalBorderSurface.hh"
 #include "G4OpBoundaryProcess.hh"
 
+// for external module G4sipm
+#include "G4Sipm.hh"
+#include "MaterialFactory.hh"
+#include "model/G4SipmModelFactory.hh"
+#include "housing/G4SipmHousing.hh"
+#include "housing/impl/HamamatsuCeramicHousing.hh"
+#include "housing/impl/HamamatsuSmdHousing.hh"
+
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 MDM_DetectorConstruction::MDM_DetectorConstruction()
@@ -81,12 +90,21 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	mptMylar->AddConstProperty("ABSLENGTH",AbsorptionLengthMylar);
 	Mylar->SetMaterialPropertiesTable(mptMylar);
 
+	//Only if the materials'optical property rindex is defined, the photon can enter the material//
 	
 	/*********************************************************************************************************************************************
-	* Define material Silicon
+	* Define material Silicon and its optical property
 	*********************************************************************************************************************************************/
 	G4Material* Silicon = nist->FindOrBuildMaterial("G4_Si");
 	
+	const G4int nEntries_si = 5;
+	G4double photonEnergies_si[nEntries_si] = { 2.761*eV,2.485*eV,2.258*eV,2.071*eV,1.911*eV};
+	//optical property of vacuum
+	G4double refractiveIndexSi[nEntries_si] = {1.50, 1.50, 1.50, 1.50, 1.50};
+	G4MaterialPropertiesTable* mptSi = new G4MaterialPropertiesTable();
+	mptSi->AddProperty("RINDEX",photonEnergies_si,refractiveIndexSi,nEntries_si);
+	Silicon->SetMaterialPropertiesTable(mptSi);
+
 	/*********************************************************************************************************************************************
 	* Define material vacuum and its optical property 
 	*********************************************************************************************************************************************/
@@ -244,7 +262,7 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	// set the detector colour to Green
 	logicDetector->SetVisAttributes(new G4VisAttributes(G4Colour::Green()));
 
-    // Define the physical volumne           
+    // Define the physical volume
 	physDetector = new G4PVPlacement(0,           //no rotation
                     detectorPos,            //at position
                     logicDetector,           //its logical volume
@@ -319,7 +337,7 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 //                                this surface type has to be used if the reflection probability should be defined by the material's reflectivity
 //                                (this does not work for dielectric_dielectric, cf. "REFLECTIVITY" below)
 //         dielectric_LUT:        if Look-Up-Tables should be used
-//         firsov:                for Firsov Process (O.B. Firsov, “Reflection of fast ions from a dense medium at glancing angles”, Sov. Phys.-Docklady, vol. 11, No. 8, pp.732-733, 1967)
+//         firsov:                for Firsov Process (O.B. Firsov, ï¿½Reflection of fast ions from a dense medium at glancing anglesï¿½, Sov. Phys.-Docklady, vol. 11, No. 8, pp.732-733, 1967)
 //         x_ray:                 for x-ray mirror process
 //
 //      possible surface finishs: (cf. http://hypernews.slac.stanford.edu/HyperNews/geant4/get/AUX/2012/05/23/23.20-70533-ces_in_geant4_revised.png !!!)
@@ -432,10 +450,10 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 
 	// Define detector optical surface property
 	G4OpticalSurface* detectorWrap = new G4OpticalSurface("detectorWrap");
-	//G4LogicalBorderSurface* surface1 = new G4LogicalBorderSurface("detectorWrap", physDetector, physWorld,detectorWrap);
+	G4LogicalBorderSurface* surface1 = new G4LogicalBorderSurface("detectorWrap", physDetector, physWorld,detectorWrap);
 
 	//no refraction, only reflection or absorption
-	//G4double sigma_alpha = 0.1;
+	G4double sigma_alpha = 1.0;
 	detectorWrap ->SetType (dielectric_metal);
 	detectorWrap ->SetFinish(polished); // polished
 	detectorWrap ->SetModel(glisur);    // glisur was Geant3 model.
@@ -443,8 +461,8 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 
 	const G4int num = 5;
 	G4double pp[num] = { 2.761*eV,2.485*eV,2.258*eV,2.071*eV,1.911*eV};
-	G4double reflectivity[num] = {0.75,0.75,0.75,0.75,0.75};   // QT throws exception when this is set to 1.0
-	G4double efficiency[num] = {0.8, 0.8, 0.8, 0.8, 0.8};  //define the detection efficiency of absorbed photons, default is 0.
+	G4double reflectivity[num] = {0.49,0.49,0.49,0.49,0.49};   // QT throws exception when this is set to 1.0
+	G4double efficiency[num] = {0.99, 0.99, 0.99, 0.99, 0.99};  //define the detection efficiency of absorbed photons, default is 0.
 	G4double rindex[num] = {1.56,1.56,1.56,1.56,1.56};
 	//G4double specularlobe[num] = {0.3, 0.3, 0.3, 0.3, 0.3};  // temparaly data
 	//G4double specularspike[num] = {0.2, 0.2, 0.2, 0.2, 0.2}; // temparaly data
@@ -460,6 +478,7 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	//detectorWrapProperty -> AddProperty("BACKSCATTERCONSTANT",pp,backscatter,NUM);
 	
 	detectorWrap->SetMaterialPropertiesTable(detectorWrapProperty);
+
 
 
 	/*********************************************************************************************************************************************
@@ -499,17 +518,17 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	// Define the optical surface between detector and sensor
 	G4OpticalSurface* PhotonSensor_op_surf = new G4OpticalSurface("PhotonSensor_op_surf");
 
-	//sigma_alpha = 0.0; //surface roughness
-	PhotonSensor_op_surf ->SetType (dielectric_metal);
-	PhotonSensor_op_surf ->SetFinish(polished);
+	sigma_alpha = 0.9; //surface roughness
+	PhotonSensor_op_surf ->SetType (dielectric_dielectric);
+	PhotonSensor_op_surf ->SetFinish(ground);
 	PhotonSensor_op_surf ->SetModel(glisur);  //was glisur
-	//PhotonSensor_op_surf ->SetSigmaAlpha(sigma_alpha);
+	PhotonSensor_op_surf ->SetSigmaAlpha(sigma_alpha);
 
 	const G4int num1 = 5;
 	G4double pp1[num1] = { 2.761*eV,2.485*eV,2.258*eV,2.071*eV,1.911*eV};
-	G4double reflectivity1[num1] = {0.9,0.9,0.9,0.9,0.9};   // 10% reflectivity
-	G4double efficiency1[num1] = {0.8, 0.8, 0.8, 0.8, 0.8};
-//	G4double rindex1[num1] = {1.56,1.56,1.56,1.56,1.56};
+	G4double reflectivity1[num1] = {0.5,0.5,0.5,0.5,0.5};   // 0% reflectivity
+	G4double efficiency1[num1] = {1.0, 1.0, 1.0, 1.0, 1.0};
+	G4double rindex1[num1] = {1.56,1.56,1.56,1.56,1.56};
 
 	G4MaterialPropertiesTable* PhotonSensor_op_surf_Property = new G4MaterialPropertiesTable();
 	PhotonSensor_op_surf_Property->AddProperty("REFLECTIVITY",pp1,reflectivity1,num1);
@@ -524,9 +543,27 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	PhotonSensor_op_surf->SetMaterialPropertiesTable(PhotonSensor_op_surf_Property);
 	
 	/* create logical skin surfaces */
-	G4LogicalSkinSurface* surface1 = new G4LogicalSkinSurface("detectorWrap",logicDetector,detectorWrap);
+	//G4LogicalSkinSurface* surface1 = new G4LogicalSkinSurface("detectorWrap",logicDetector,detectorWrap);
 
 	G4LogicalSkinSurface* surface2 = new G4LogicalSkinSurface("PhotonSensor_op_surf",logicSensor,PhotonSensor_op_surf);
+
+
+	/*********************************************************************************************************************************************
+	* Define a photon sensor - SiPM
+	* Use a G4Sipm module from https://forge.physik.rwth-aachen.de/public/g4sipm/index.html
+	*
+	*********************************************************************************************************************************************/
+	// create a new SiPM instance with only bare silicon chip
+	G4SipmModel* g4sipmModel = G4SipmModelFactory::getInstance()->createHamamatsuS1036211100();
+	G4Sipm* sipm = new G4Sipm(g4sipmModel);
+
+	// create a package house with window to host the bare silicon cip
+	housing = new G4SipmHousing(sipm);
+
+	housing->setPosition(G4ThreeVector(housing->getDx() / 2*mm + 0.5*mm, 0., -housing->getDz() / 2*mm));
+	// Build SiPM.
+	housing->buildAndPlace(physWorld);
+
 
 
   //always return the physical World
@@ -550,4 +587,12 @@ void MDM_DetectorConstruction::ConstructSDandField()
 	G4SDManager::GetSDMpointer()->AddNewDetector(sipmSD);
 	SetSensitiveDetector("Sensor",sipmSD);
 
+}
+
+G4SipmModel* MDM_DetectorConstruction::getSipmModel() const {
+	return housing->getSipm()->getModel();
+}
+
+G4SipmHousing* MDM_DetectorConstruction::getSipmHousing() const {
+	return housing;
 }

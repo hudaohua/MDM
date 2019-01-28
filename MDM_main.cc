@@ -12,8 +12,8 @@
 // * v0.5	17/02/2016  update the geometry to introduce scintillator *
 // *					array, dual layer and SiPm array.			  *
 // * v0.6a      09/01/2018   update the scintillator material to LXSR  *
-//                           update the program to multiple thread
-//                           recomplie the code to geant4.10.03 patch3
+// *                          update the program to multiple thread    *
+// *                         recomplie the code to geant4.10.03 patch3 *
 // ********************************************************************
 //
 // $Id: MDM_main.cc 75216 2013-10-29 16:08:11Z gcosmo $

@@ -85,7 +85,7 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 
 	G4double DET_R = 3*mm;
 	G4double BETA_DET_HZ = 0.5*mm;
-	G4double GAMMA_DET_HZ = 1.25*mm;
+	G4double GAMMA_DET_HZ = 3*mm;
 	
 	// Get nist material manager
 	G4NistManager* nist = G4NistManager::Instance();

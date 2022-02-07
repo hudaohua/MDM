@@ -19,7 +19,7 @@
 // $Id: MDM_main.cc 75216 2013-10-29 16:08:11Z gcosmo $
 // version log
 /// v0.3 30/06/2015
-
+#define G4VIS_USE 1
 
 #include "MDM_DetectorConstruction.hh"
 #include "MDM_ActionInitialization.hh"
@@ -35,13 +35,8 @@
 #include "G4UImanager.hh"
 #include "QBBC.hh"
 
-#ifdef G4VIS_USE
 #include "G4VisExecutive.hh"
-#endif
-
-#ifdef G4UI_USE
 #include "G4UIExecutive.hh"
-#endif
 
 #include "Randomize.hh"
 #include "G4ScoringManager.hh"
@@ -55,6 +50,9 @@ int main(int argc,char** argv)
 	     << "Author: Hubert Hu."<< G4endl
 		 << "Version: 0.6a" <<G4endl
 		 << "Date: 09/01/2018" <<G4endl;
+  
+  G4UIExecutive* ui = nullptr;
+  if(argc==1) {ui = new G4UIExecutive(argc,argv);}
 
   // Choose the Random engine
   //
@@ -65,7 +63,7 @@ int main(int argc,char** argv)
   // no multithreded for now
 #ifdef G4MULTITHREADED
   G4MTRunManager* runManager = new G4MTRunManager;
-  runManager -> SetNumberOfThreads(12); // if not set, default to be 2.
+  runManager -> SetNumberOfThreads(4); // if not set, default to be 2.
   G4cout << "Debug info: I'm running in multiple thread mode!" << G4endl;
 #else
   G4RunManager* runManager = new G4RunManager;
@@ -102,11 +100,11 @@ int main(int argc,char** argv)
 	//G4GDMLParser parser;
 	//parser.Write("MDM_output.gdml",W,true);
   
-#ifdef G4VIS_USE
+
   // Initialize visualization
   G4VisManager* visManager = new G4VisExecutive;
   visManager->Initialize();
-#endif
+
     
   // Get the pointer to the User Interface manager
   G4UImanager* UImanager = G4UImanager::GetUIpointer();
@@ -114,7 +112,7 @@ int main(int argc,char** argv)
   //enable tracking verbose to level 2
   //UImanager->ApplyCommand("/tracking/verbose 1");
  
-  if (argc!=1) {
+  if (! ui) {
     // batch mode
     G4String command = "/control/execute ";
     G4String fileName = argv[1];
@@ -122,16 +120,9 @@ int main(int argc,char** argv)
   }
   else {
     // interactive mode : define UI session
-#ifdef G4UI_USE
-    G4UIExecutive* ui = new G4UIExecutive(argc, argv);
-#ifdef G4VIS_USE
     UImanager->ApplyCommand("/control/execute init_vis.mac");
-#else
-    UImanager->ApplyCommand("/control/execute init.mac"); 
-#endif
     ui->SessionStart();
     delete ui;
-#endif
   }
 
   // Job termination
@@ -139,9 +130,7 @@ int main(int argc,char** argv)
   // owned and deleted by the run manager, so they should not be deleted 
   // in the main() program !
   
-#ifdef G4VIS_USE
   delete visManager;
-#endif
   delete runManager;
   
 

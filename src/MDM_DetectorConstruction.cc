@@ -119,10 +119,10 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	G4MaterialPropertiesTable *Bc408_mt = new G4MaterialPropertiesTable();
 	Bc408_mt->AddProperty("RINDEX", PhotonEnergy_Bc408, RINDEX_Bc408,  NUMENTRIES);
 	Bc408_mt->AddProperty("ABSLENGTH", PhotonEnergy_Bc408, ABSORPTION_Bc408,  NUMENTRIES);
-	Bc408_mt->AddProperty("FASTCOMPONENT", PhotonEnergy_Bc408, SCINTILLATION_Bc408, NUMENTRIES);
+	Bc408_mt->AddProperty("SCINTILLATIONCOMPONENT1", PhotonEnergy_Bc408, SCINTILLATION_Bc408, NUMENTRIES);
 	Bc408_mt->AddConstProperty("SCINTILLATIONYIELD",500./MeV);
 	Bc408_mt->AddConstProperty("RESOLUTIONSCALE",1.0);
-	Bc408_mt->AddConstProperty("FASTTIMECONSTANT", 1.*ns);
+	Bc408_mt->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 1.*ns);
 	Bc408->SetMaterialPropertiesTable(Bc408_mt);  
 
 	/*********************************************************************************************************************************************
@@ -172,10 +172,10 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	G4MaterialPropertiesTable *LXSR_mt = new G4MaterialPropertiesTable();
 	LXSR_mt->AddProperty("RINDEX", PhotonEnergy_LXSR, RINDEX_LXSR, LXSR_NUMENTRIES);
 	LXSR_mt->AddProperty("ABSLENGTH",PhotonEnergy_LXSR, ABSLENGTH_LXSR, LXSR_NUMENTRIES );
-	LXSR_mt->AddProperty("SLOWCOMPONENT", PhotonEnergy_LXSR, SCINTILLATION_LXSR, LXSR_NUMENTRIES);
+	LXSR_mt->AddProperty("SCINTILLATIONCOMPONENT1", PhotonEnergy_LXSR, SCINTILLATION_LXSR, LXSR_NUMENTRIES);
 	LXSR_mt->AddConstProperty("SCINTILLATIONYIELD",32000./MeV);   //80% of NaI
 	LXSR_mt->AddConstProperty("RESOLUTIONSCALE",1.0);
-	LXSR_mt->AddConstProperty("SLOWTIMECONSTANT", 42.*ns);
+	LXSR_mt->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 42.*ns);
 	LXSR->SetMaterialPropertiesTable(LXSR_mt);  
 
 	/*********************************************************************************************************************************************
@@ -222,11 +222,23 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 		0.4879, 0.5411, 0.6332, 0.6684, 0.7036,
 		0.7393, 0.7759, 0.8492, 0.9727, 1.262,
 		1.558};
-		
-	G4double AbsorptionLengthWrap = 80.*cm;
+	G4double reflectivityIndexWrap[LXSR_NUMENTRIES] =	{
+		1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1,
+		1};
+	
+	G4double AbsorptionLengthWrap[LXSR_NUMENTRIES] = {
+		80.*cm,	80.*cm,	80.*cm,	80.*cm,	80.*cm,
+		80.*cm,	80.*cm,	80.*cm,	80.*cm,	80.*cm,
+		80.*cm,	80.*cm,	80.*cm,	80.*cm,	80.*cm,
+		80.*cm,	80.*cm,	80.*cm,	80.*cm,	80.*cm,
+		80.*cm};
+
 	mptWrap->AddProperty("RINDEX",PhotonEnergy_LXSR,refractiveIndexWrap,LXSR_NUMENTRIES);
-	mptWrap->AddConstProperty("REFLECTIVITY",1); // 0.99
-	mptWrap->AddConstProperty("ABSLENGTH",AbsorptionLengthWrap);
+	mptWrap->AddProperty("REFLECTIVITY",PhotonEnergy_LXSR,reflectivityIndexWrap, LXSR_NUMENTRIES); // 0.99
+	mptWrap->AddProperty("ABSLENGTH",PhotonEnergy_LXSR, AbsorptionLengthWrap, LXSR_NUMENTRIES);
 	Wrap->SetMaterialPropertiesTable(mptWrap);
 	/*********************************************************************************************************************************************
 	* Define material vacuum and its optical property 
@@ -316,14 +328,14 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	G4MaterialPropertiesTable* mptCesiumIodide = new G4MaterialPropertiesTable();
 	// add the optical properties of Cesium Iodide to this object
 	// mptCesiumIodide->AddProperty("FASTCOMPONENT", photonEnergies, Scnt_FAST, nEntries);
-	mptCesiumIodide->AddProperty("SLOWCOMPONENT", photonEnergies, Scnt_SLOW, nEntries);
+	mptCesiumIodide->AddProperty("SCINTILLATIONCOMPONENT1", photonEnergies, Scnt_SLOW, nEntries);
 	mptCesiumIodide->AddProperty("RINDEX",photonEnergies,refractiveIndexCesiumIodide,nEntries);
 	mptCesiumIodide->AddProperty("ABSLENGTH",photonEnergies,absorptionLengthCesiumIodide,nEntries);
 	mptCesiumIodide->AddConstProperty("SCINTILLATIONYIELD", 54000./MeV);
 	// no need for yield ratio if only one compound(fast or slow) is defined.
 	// mptCesiumIodide->AddConstProperty("YIELDRATIO", 0.0);
 	// mptCesiumIodide->AddConstProperty("FASTTIMECONSTANT", 1.*ns);
-	mptCesiumIodide->AddConstProperty("SLOWTIMECONSTANT", 1000.*ns);
+	mptCesiumIodide->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 1000.*ns);
 	// RESOLUTIONSCALE can be calculated from the energy resolution of the scintillator.
 	// here the energy resolution should be the intrinsic energy resolution of the scintillator
 	// resolution scale here will produce a statistical fluctuation around the average yield set with scintillationyeild.
@@ -375,7 +387,6 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	* Define the top coating, 50nm thick
 	*********************************************************************************************************************************************/
 	G4double top_coat_hz = 0.000025*mm;
-
 	G4ThreeVector coat_top_Pos = G4ThreeVector(0*mm, 0*mm, top_coat_hz); //
 
 	// Define the shape

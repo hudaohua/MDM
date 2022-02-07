@@ -31,7 +31,12 @@
 #ifndef MDM_Analysis_h
 #define MDM_Analysis_h 1
 
-#include "g4root.hh"
+//removed for Geant4.11.0
+//#include "g4root.hh"
+
+//add for Geant4.11.0
+#include "G4AnalysisManager.hh"
+
 //#include "g4xml.hh"
 
 #endif

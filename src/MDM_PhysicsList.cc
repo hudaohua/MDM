@@ -46,6 +46,8 @@ MDM_PhysicsList::MDM_PhysicsList()
   G4OpticalPhysics* opticalPhysics = new G4OpticalPhysics();
   RegisterPhysics(opticalPhysics);
 
+  /* not valid any more for Geant4.11.0; so comment out
+   * shall use G4OpticalParameters class *
   opticalPhysics->SetScintillationYieldFactor(1.0);
   opticalPhysics->SetScintillationExcitationRatio(0.0);
 
@@ -54,7 +56,7 @@ MDM_PhysicsList::MDM_PhysicsList()
 
   opticalPhysics->SetTrackSecondariesFirst(kCerenkov,true);
   opticalPhysics->SetTrackSecondariesFirst(kScintillation,true);
-
+  */
   // Default physics
   RegisterPhysics(new G4DecayPhysics());
 

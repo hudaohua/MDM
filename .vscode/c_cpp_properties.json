@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/local/geant4.11.0.0/**",
-                "/usr/local/clhep/2.4.5.1/**"
+                "/usr/local/clhep/2.4.5.1/**",
+                "/usr/local/root/6.18.04/**"
             ],
             "defines": [],
             "compilerPath": "/bin/gcc",

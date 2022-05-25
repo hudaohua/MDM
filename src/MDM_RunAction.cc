@@ -33,6 +33,8 @@
 
 
 
+
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 
@@ -125,6 +127,9 @@ void MDM_RunAction::BeginOfRunAction(const G4Run* aRun)
 
 	  // Get analysis manager
   G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
+  analysisManager->SetDefaultFileType("root");
+  // 
+  analysisManager->SetNtupleMerging(true);
 
   // Open an output file
   //  

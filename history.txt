@@ -1,0 +1,3 @@
+Note about version history
+
+v0.6b code is updated to Geant4.11.0. Code is synchronized to github

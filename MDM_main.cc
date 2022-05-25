@@ -14,11 +14,12 @@
 // * v0.6a      09/01/2018   update the scintillator material to LXSR  *
 // *                          update the program to multiple thread    *
 // *                         recomplie the code to geant4.10.03 patch3 *
+// * v0.6b  25/05/2022  update for Geant4.11.0                        *
 // ********************************************************************
 //
 // $Id: MDM_main.cc 75216 2013-10-29 16:08:11Z gcosmo $
 // version log
-/// v0.3 30/06/2015
+// v0.3 30/06/2015
 #define G4VIS_USE 1
 
 #include "MDM_DetectorConstruction.hh"

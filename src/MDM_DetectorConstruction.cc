@@ -14,17 +14,15 @@
 // * v0.6   09/04/2017  Add 100% reflectivity to Si       -- cancelled				             *
 // * v0.7   05/12/2017  Change the main scintillator to LXSR,								     *
 // *                    change the wrapping material to 50nm aluminium                           *
-// *                    change the BC408 scintillator geometry to cylinder, D3mm, H1mm           *
+// *                    change the Bc404 scintillator geometry to cylinder, D3mm, H1mm           *
 // * v0.8	27/01/2019	update the main scintillator and beta scintillator to a new size,        *
 // *					total: D6mm,H3.5mm														 *
 // *                    beta scintillator: D6mm, H1mm,											 *
 // *					main scintillator: D6mm, H2.5mm,                                         *
+// * v0.9	26/05/2022	beta scintillator: BC404, D6MM, H15 um,                                  *
+// *                    main scintillator: LXSR, D6mm, H4mm                                      *
 // ***********************************************************************************************
 //
-// $Id: MDM_DetectorConstruction.cc 75117 2013-10-28 09:38:37Z gcosmo $
-//
-/// \file MDM_DetectorConstruction.cc
-/// \brief Implementation of the MDM_DetectorConstruction class
 
 #include "MDM_DetectorConstruction.hh"
 
@@ -58,9 +56,6 @@
 #include "MDM_Global.hh"
 
 
-
-
-
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 MDM_DetectorConstruction::MDM_DetectorConstruction()
@@ -84,46 +79,46 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	G4double a, z;
 
 	G4double DET_R = 3*mm;
-	G4double BETA_DET_HZ = 0.5*mm;
-	G4double GAMMA_DET_HZ = 3*mm;
+	G4double BETA_DET_HZ = 0.017*mm; // estimated thickness of BC404 coating with +- 5um error)
+	G4double GAMMA_DET_HZ = 2*mm;
 	
 	// Get nist material manager
 	G4NistManager* nist = G4NistManager::Instance();
 
 	/*********************************************************************************************************************************************
-	* Define material BC408 and its optical property
-	* data copied from https://www-zeuthen.desy.de/lcdet/Feb_05_WS/talks/rd_lcdet_sim.pdf
+	* Define material Bc404 and its optical property
+	* data copied from https://arxiv.org/pdf/2106.04734.pdf
 	* data also from http://www.crystals.saint-gobain.com/uploadedFiles/SG-Crystals/Documents/SGC%20BC400-404-408-412-416%20Data%20Sheet.pdf
 
 	*********************************************************************************************************************************************/
-	G4Material* Bc408 = nist->FindOrBuildMaterial("G4_PLASTIC_SC_VINYLTOLUENE");
+	G4Material* Bc404 = nist->FindOrBuildMaterial("G4_PLASTIC_SC_VINYLTOLUENE");
 	
 	const G4int NUMENTRIES = 12;
-	G4double PhotonEnergy_Bc408[NUMENTRIES] =	{ 
+	G4double PhotonEnergy_Bc404[NUMENTRIES] =	{ 
 		3.44*eV, 3.26*eV, 3.1*eV, 3.02*eV, 2.95*eV,
 		2.92*eV, 2.82*eV, 2.76*eV, 2.7*eV, 2.58*eV,
 		2.38*eV, 2.08*eV };
-	G4double RINDEX_Bc408[NUMENTRIES] =	{
+	G4double RINDEX_Bc404[NUMENTRIES] =	{
 		1.58, 1.58, 1.58, 1.58, 1.58,
 		1.58, 1.58, 1.58, 1.58, 1.58,
 		1.58, 1.58 };
-	G4double ABSORPTION_Bc408[NUMENTRIES] =	{
-		210*cm, 210*cm, 210*cm, 210*cm, 210*cm,
-		210*cm, 210*cm, 210*cm, 210*cm, 210*cm,
-		210*cm, 210*cm }; 
-	G4double SCINTILLATION_Bc408[NUMENTRIES] =	{
+	G4double ABSORPTION_Bc404[NUMENTRIES] =	{
+		140*cm, 140*cm, 140*cm, 140*cm, 140*cm,
+		140*cm, 140*cm, 140*cm, 140*cm, 140*cm,
+		140*cm, 140*cm }; 
+	G4double SCINTILLATION_Bc404[NUMENTRIES] =	{
 		0.04, 0.07, 0.20, 0.49, 0.84,
 		1.00, 0.83, 0.55, 0.40, 0.17,
 		0.03, 0 };
 
-	G4MaterialPropertiesTable *Bc408_mt = new G4MaterialPropertiesTable();
-	Bc408_mt->AddProperty("RINDEX", PhotonEnergy_Bc408, RINDEX_Bc408,  NUMENTRIES);
-	Bc408_mt->AddProperty("ABSLENGTH", PhotonEnergy_Bc408, ABSORPTION_Bc408,  NUMENTRIES);
-	Bc408_mt->AddProperty("SCINTILLATIONCOMPONENT1", PhotonEnergy_Bc408, SCINTILLATION_Bc408, NUMENTRIES);
-	Bc408_mt->AddConstProperty("SCINTILLATIONYIELD",500./MeV);
-	Bc408_mt->AddConstProperty("RESOLUTIONSCALE",1.0);
-	Bc408_mt->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 1.*ns);
-	Bc408->SetMaterialPropertiesTable(Bc408_mt);  
+	G4MaterialPropertiesTable *Bc404_mt = new G4MaterialPropertiesTable();
+	Bc404_mt->AddProperty("RINDEX", PhotonEnergy_Bc404, RINDEX_Bc404,  NUMENTRIES);
+	Bc404_mt->AddProperty("ABSLENGTH", PhotonEnergy_Bc404, ABSORPTION_Bc404,  NUMENTRIES);
+	Bc404_mt->AddProperty("SCINTILLATIONCOMPONENT1", PhotonEnergy_Bc404, SCINTILLATION_Bc404, NUMENTRIES);
+	Bc404_mt->AddConstProperty("SCINTILLATIONYIELD",500./MeV); 
+	Bc404_mt->AddConstProperty("RESOLUTIONSCALE",1.0);
+	Bc404_mt->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 1.8*ns);
+	Bc404->SetMaterialPropertiesTable(Bc404_mt);  
 
 	/*********************************************************************************************************************************************
 	* Define material LXSR and its optical property from SEMICRO.ORG
@@ -414,7 +409,7 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
                     checkOverlaps);          //overlaps checking
 
 	/*********************************************************************************************************************************************
-	* Define the first detector - Bc408 Scintillator shape
+	* Define the first detector - Bc404 Scintillator shape
 	* Scintillator size is a hemisphere with thickness of 0.2mm
 	*********************************************************************************************************************************************/
 #ifndef REMOVE_BETA_DET
@@ -441,7 +436,7 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
     // Define the logic volumne                  
 	G4LogicalVolume* logic_Beta_Detector =                         
 	new G4LogicalVolume(fastDetectorTube,   //its shape
-                        Bc408,					//its material
+                        Bc404,					//its material
                         "Beta_Detector");			//its name
 
 	// set the detector colour to white and transparent

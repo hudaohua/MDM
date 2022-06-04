@@ -19,7 +19,7 @@
 // *					total: D6mm,H3.5mm														 *
 // *                    beta scintillator: D6mm, H1mm,											 *
 // *					main scintillator: D6mm, H2.5mm,                                         *
-// * v0.9	26/05/2022	beta scintillator: BC404, D6MM, H15 um,                                  *
+// * v0.9	26/05/2022	beta scintillator: BC404, D6MM, H15um,                                  *
 // *                    main scintillator: LXSR, D6mm, H4mm                                      *
 // ***********************************************************************************************
 //
@@ -115,7 +115,7 @@ G4VPhysicalVolume* MDM_DetectorConstruction::Construct()
 	Bc404_mt->AddProperty("RINDEX", PhotonEnergy_Bc404, RINDEX_Bc404,  NUMENTRIES);
 	Bc404_mt->AddProperty("ABSLENGTH", PhotonEnergy_Bc404, ABSORPTION_Bc404,  NUMENTRIES);
 	Bc404_mt->AddProperty("SCINTILLATIONCOMPONENT1", PhotonEnergy_Bc404, SCINTILLATION_Bc404, NUMENTRIES);
-	Bc404_mt->AddConstProperty("SCINTILLATIONYIELD",500./MeV); 
+	Bc404_mt->AddConstProperty("SCINTILLATIONYIELD",11832./MeV);  // Anthracene 17400 #/MeV, 68% of Anthracene = 11832
 	Bc404_mt->AddConstProperty("RESOLUTIONSCALE",1.0);
 	Bc404_mt->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 1.8*ns);
 	Bc404->SetMaterialPropertiesTable(Bc404_mt);  

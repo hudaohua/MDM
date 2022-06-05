@@ -1,7 +1,14 @@
-/gps/particle proton
+/control/verbose 0
+/tracking/verbose 0
+/event/verbose 0
+/gps/verbose 0
+
+
+/gps/particle ion
+/gps/ion 2 4 0 0
 /gps/pos/type Point
-/gps/pos/centre 0. 0. -1. cm
-/gps/ang/type iso
-/gps/energy 2 MeV
+/gps/pos/centre 0. 0. 1. cm
+/gps/direction 0 0 -1 cm
+/gps/energy 5.4 MeV
 
 /run/beamOn 100

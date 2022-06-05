@@ -226,9 +226,12 @@ void MDM_EventAction::EndOfEventAction(const G4Event* event)
 		}else if(VertexvolumnName=="Beta_Detector")                         //(VertexvolumnName=="Beta_Detector")
 		{
 			//photons generated in the beta detector
-			analysisManager->FillH1(4, sipmHit->GetHitTime());
+			//comment out 05/06/2022
+			//analysisManager->FillH1(4, sipmHit->GetHitTime());
 			n_beta_detector_photons ++;
 		}
+		// store all the particle into H4
+		analysisManager->FillH1(4, sipmHit->GetHitTime());
 	}
 	analysisManager->FillH1(0, totalTrackEnergy);  //total energy of all the photons detected by the SiPm
 	analysisManager->FillH1(2, largestTrackID);//Largest track ID collected by the SiPM
